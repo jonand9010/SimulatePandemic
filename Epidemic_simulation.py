@@ -14,20 +14,6 @@ import json
 
 
 
-#%%
-sns.set()
-seed = 0
-np.random.seed(seed)
-
-T = 120 # Max number of days of simulation
-
-beta = .8  #transmission rate
-gamma = 0.4 #recovery rate
-public_trans = 0.1  # alpha
-R0 = beta/gamma
-
-
-
 def get_graph(n_nodes = 10, clusters = 5):
     choice = np.zeros((clusters, 1))
     choice[0] = 1
@@ -90,15 +76,35 @@ def update_infected_adjacency_matrix(n_nodes, A, Flux_I):
 
                 
 
+#%%
+sns.set()
+seed = 0
+np.random.seed(seed)
+
+T = 120 # Max number of days of simulation
+
+beta = .8  #transmission rate
+gamma = 0.4 #recovery rate
+public_trans = 0.1  # alpha
+R0 = beta/gamma
+
+'''
+n_nodes = 10 
 
 G = nx.random_geometric_graph(n_nodes, 0.2, seed=seed) # Random geometric network of n_nodes cities
 #pos = nx.get_node_attributes(G, 'pos')  #Save the node positions
+
+
+'''
+
 
 with open('graph_data.json') as json_file:
     import_data = json.load(json_file)
 with open('pos_dic.json') as json_file:
     import_pos = json.load(json_file)
-    
+
+
+
 import_graph = nx.node_link_graph(import_data)
 
 
@@ -185,27 +191,25 @@ crs = ccrs.PlateCarree()
 fig1 = plt.figure()
 ax1 = plt.subplot(111, projection = crs)
 
-ax1.stock_img()
-nx.draw_networkx(G, ax = ax1, font_size=10,
+for t in range(T):
+
+    ax1.stock_img()
+    nx.draw_networkx(G, ax = ax1, font_size=10,
              alpha=.25,
              width=.1,
-             node_size=0.1*I[:,0],
+             node_size=0.1*I[:,t],
              with_labels=False,
              pos=pos,
              node_color = 'r',
              cmap=plt.cm.autumn)
-#%%
-for t in range(T):
 
-    
-    ax1.markersize = 0.1*I[:,t]
     if t != T-1:
         if SIR[1, t] == 0:
             break
         
         plt.pause(0.1)
         ax1.cla()
-
+#%%
 fig2 = plt.figure()
 ax2 = plt.subplot(111)
 l1, = ax2.plot(SIR[0]/SIR[0,0], 'b', alpha = 0.5)
