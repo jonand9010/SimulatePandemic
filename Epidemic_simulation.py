@@ -22,9 +22,9 @@ def get_graph(n_nodes = 10, clusters = 5):
         r = np.random.permutation(choice)
         for c in range(clusters):
             gauss = r[c]*np.random.normal([c,c], 1.5, 2)
-            #gauss = r[0]*np.random.normal([0,0], 1.5, 2) + r[1]*np.random.normal([-5, 5], 1.5, 2) \
-            #+ r[2]*np.random.normal([5, 5], 1.5, 2)  
+
         pos[i] = gauss
+        
     G = nx.random_geometric_graph(n_nodes, radius = c, pos=pos)
     return G, pos
 
@@ -63,7 +63,7 @@ def get_infected_travellers(n_nodes, N, I, dNdt):
     return Flux_I
 
 
-def update_infected_adjacency_matrix(n_nodes, A, Flux_I):
+def update_infected_adjacency_matrix(n_nodes, A, n, Flux_I):
 
 
     while Flux_I > 0:
@@ -119,17 +119,16 @@ L_sym = Laplacian(A)    # Calculate graph Laplacian
 
 N = np.zeros((n_nodes, T), dtype = 'int')   #Initialize vector for city populations
 S, I, R = N.copy(), N.copy(), N.copy()      #Initialize vector for susceptible, infected, and recovered in each city
+ 
+N[:,0] = 10000 * np.ones((n_nodes, )) #Population in each city at t=0
 
-#N[:,0] = np.random.randint(100,1000000, size = n_nodes)    #Random population in each city at t=0
-N[:,0] = 10000 * np.ones((n_nodes, ))
-#r_node = np.random.randint(n_nodes)                     #Randomly picked city to be infected
 
 list_pos = list(pos.keys())
 pos_list = list(pos.items())
 pos_new = {}
 for i in range(len(G.nodes())):
-    #pos_new[i] = pos_list[i][1]
-    if list(G.nodes())[i] == 'WUH':
+
+    if list(G.nodes())[i] == 'WUH': #Selecting Wuhan as first infected city
         start_pos = i
 
 r_node = start_pos
@@ -145,7 +144,6 @@ SIR[:, 0] = np.sum(S[:,0]), np.sum(I[:,0]), np.sum(R[:,0])
 for t in range(T-1):
     dNdt = - public_trans * np.dot(L_sym, N[:, t]) # Number of people travelling to another city each day
 
-    #dNdt = dNdt - np.sum(dNdt) / n_nodes # Making sure that the system is closed
     dNdt = np.round(dNdt)
 
     #N[:, t+1] = N[:,t] + dNdt
@@ -157,13 +155,11 @@ for t in range(T-1):
         Flux_I = get_infected_travellers(n_nodes, N[n, t], I[n, t], dNdt[n])
 
         
-        update_infected_adjacency_matrix(n_nodes, A, Flux_I)
+        update_infected_adjacency_matrix(n_nodes, A, n, Flux_I)
       
         
     #Correction from movements
     dI = np.sum(A_I, axis = 1)
-    #if t < 100:
-        #print(np.sum(dI))
 
     I[:, t] = I[:, t] + dI 
     S[:, t] = S[:, t] - dI
