@@ -5,29 +5,28 @@ Created on Sat Mar 14 13:28:30 2020
 
 @author: Jonas
 """
+#%%
 
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import seaborn as sns
 import json
+from pathlib import Path
 
 
 
-def get_graph(n_nodes = 10, clusters = 5):
-    choice = np.zeros((clusters, 1))
-    choice[0] = 1
-    pos = {}
-    for i in range(n_nodes):
-        r = np.random.permutation(choice)
-        for c in range(clusters):
-            gauss = r[c]*np.random.normal([c,c], 1.5, 2)
-            #gauss = r[0]*np.random.normal([0,0], 1.5, 2) + r[1]*np.random.normal([-5, 5], 1.5, 2) \
-            #+ r[2]*np.random.normal([5, 5], 1.5, 2)  
-        pos[i] = gauss
-    G = nx.random_geometric_graph(n_nodes, radius = c, pos=pos)
-    return G, pos
+#%%
+sns.set()
+seed = 0
+np.random.seed(seed)
 
+T = 120 # Max number of days of simulation
+
+beta = .8  #transmission rate
+gamma = 0.4 #recovery rate
+public_trans = 0.1  # alpha
+R0 = beta/gamma
 
 def Laplacian(A): 
     #A = A - 2*np.tril(A)    # Changes the sign of lower triangle of the matrix (to account for in/out flux)
@@ -76,35 +75,11 @@ def update_infected_adjacency_matrix(n_nodes, A, Flux_I):
 
                 
 
-#%%
-sns.set()
-seed = 0
-np.random.seed(seed)
-
-T = 120 # Max number of days of simulation
-
-beta = .8  #transmission rate
-gamma = 0.4 #recovery rate
-public_trans = 0.1  # alpha
-R0 = beta/gamma
-
-'''
-n_nodes = 10 
-
-G = nx.random_geometric_graph(n_nodes, 0.2, seed=seed) # Random geometric network of n_nodes cities
-#pos = nx.get_node_attributes(G, 'pos')  #Save the node positions
-
-
-'''
-
-
-with open('graph_data.json') as json_file:
+with open(Path(__file__).with_name('graph_data.json')) as json_file:
     import_data = json.load(json_file)
-with open('pos_dic.json') as json_file:
+with open(Path(__file__).with_name('pos_dic.json')) as json_file:
     import_pos = json.load(json_file)
-
-
-
+    
 import_graph = nx.node_link_graph(import_data)
 
 
@@ -120,15 +95,14 @@ L_sym = Laplacian(A)    # Calculate graph Laplacian
 N = np.zeros((n_nodes, T), dtype = 'int')   #Initialize vector for city populations
 S, I, R = N.copy(), N.copy(), N.copy()      #Initialize vector for susceptible, infected, and recovered in each city
 
-#N[:,0] = np.random.randint(100,1000000, size = n_nodes)    #Random population in each city at t=0
-N[:,0] = 10000 * np.ones((n_nodes, ))
-#r_node = np.random.randint(n_nodes)                     #Randomly picked city to be infected
+
+N[:,0] = 10000 * np.ones((n_nodes, )) #10000 people per city
 
 list_pos = list(pos.keys())
 pos_list = list(pos.items())
 pos_new = {}
 for i in range(len(G.nodes())):
-    #pos_new[i] = pos_list[i][1]
+
     if list(G.nodes())[i] == 'WUH':
         start_pos = i
 
@@ -162,8 +136,6 @@ for t in range(T-1):
         
     #Correction from movements
     dI = np.sum(A_I, axis = 1)
-    #if t < 100:
-        #print(np.sum(dI))
 
     I[:, t] = I[:, t] + dI 
     S[:, t] = S[:, t] - dI
@@ -189,11 +161,19 @@ plt.close('all')
 crs = ccrs.PlateCarree()
 
 fig1 = plt.figure()
-ax1 = plt.subplot(111, projection = crs)
+
+crs = ccrs.PlateCarree()
+
+#%%
 
 for t in range(T):
+    ax1 = plt.subplot(111, projection = crs)
 
     ax1.stock_img()
+    
+
+    
+    ax1 = plt.subplot(111, projection = crs)
     nx.draw_networkx(G, ax = ax1, font_size=10,
              alpha=.25,
              width=.1,
@@ -202,13 +182,12 @@ for t in range(T):
              pos=pos,
              node_color = 'r',
              cmap=plt.cm.autumn)
-
     if t != T-1:
         if SIR[1, t] == 0:
             break
-        
-        plt.pause(0.1)
-        ax1.cla()
+       
+    plt.pause(0.1)
+    ax1.cla() 
 #%%
 fig2 = plt.figure()
 ax2 = plt.subplot(111)
@@ -218,6 +197,8 @@ l3, = ax2.plot(SIR[2]/SIR[0,0], 'g', alpha = 0.5)
 ax2.legend([l1, l2, l3], ['Susceptible', 'Infected', 'Recovered'])
 ax2.set_title('R0: ' + str(R0))
 ax2.set_xlabel('Days')
+plt.show()
     #plt.savefig('Epidemic' + str(t) + '.png')
 
  
+# %%
