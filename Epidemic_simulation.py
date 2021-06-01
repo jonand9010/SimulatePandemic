@@ -14,8 +14,6 @@ import seaborn as sns
 import json
 from pathlib import Path
 
-
-
 #%%
 sns.set()
 seed = 0
@@ -41,6 +39,7 @@ def Laplacian(A):
     return L
 
 def get_infected_travellers(n_nodes, N, I, dNdt):
+
     if N == 0:
         I = 0
         p = 0         #Probability that a traveller is infected
@@ -54,7 +53,6 @@ def get_infected_travellers(n_nodes, N, I, dNdt):
     else:
         p = I/N
 
-    
     n = np.int(np.abs(dNdt)) #Number of travellers to choose from
 
     Flux_I = np.random.binomial(n , p)  #The number of infected travellers
@@ -64,27 +62,28 @@ def get_infected_travellers(n_nodes, N, I, dNdt):
 
 def update_infected_adjacency_matrix(n_nodes, A, Flux_I):
 
-
     while Flux_I > 0:
-        edge_list = np.where(A[n,:] == 1)[0]     #List of non-zero edges
+        edge_list = np.where(A[n,:] == 1)[0]        #List of non-zero edges
         random_edge = np.random.choice(edge_list)   #Random choice of edge
-        Nr_I  = np.random.randint(0, Flux_I+1) #Number of random infected to move in a certain direction
-        A_I[random_edge, n] = Nr_I  #Nr_I infected moving along edge random_edge 
+        Nr_I  = np.random.randint(0, Flux_I+1)      #Number of random infected to move in a certain direction
+        A_I[random_edge, n] = Nr_I                  #Nr_I infected moving along edge random_edge 
         A_I[n, n] = -Nr_I
-        Flux_I = Flux_I - Nr_I #Count down the total number of infected left to distribute
+        Flux_I = Flux_I - Nr_I                      #Count down the total number of infected left to distribute
 
                 
+def load_Graph_and_Position(graph_filename, pos_filename):
+    with open(Path(__file__).with_name('graph_data.json')) as json_file:
+        import_graph = json.load(json_file)
 
-with open(Path(__file__).with_name('graph_data.json')) as json_file:
-    import_data = json.load(json_file)
-with open(Path(__file__).with_name('pos_dic.json')) as json_file:
-    import_pos = json.load(json_file)
-    
-import_graph = nx.node_link_graph(import_data)
+    with open(Path(__file__).with_name('pos_dic.json')) as json_file:
+        import_pos = json.load(json_file)
 
+    return import_graph, import_pos
 
-G = import_graph
-pos = import_pos
+import_graph, pos = load_Graph_and_Position('graph_data.json', 'pos_dic.json')
+
+G = nx.node_link_graph(import_graph)
+
 n_nodes = nx.number_of_nodes(G)
 A = nx.to_numpy_array(G)    #Save the adjacency matrix of the network
 
@@ -92,37 +91,29 @@ A = nx.to_numpy_array(G)    #Save the adjacency matrix of the network
 L_sym = Laplacian(A)    # Calculate graph Laplacian
 
 
-N = np.zeros((n_nodes, T), dtype = 'int')   #Initialize vector for city populations
-S, I, R = N.copy(), N.copy(), N.copy()      #Initialize vector for susceptible, infected, and recovered in each city
+N = np.zeros((n_nodes, T), dtype = 'int')   # Initialize vector for city populations
+S, I, R = N.copy(), N.copy(), N.copy()      # Initialize vector for susceptible, infected, and recovered in each city
 
 
 N[:,0] = 10000 * np.ones((n_nodes, )) #10000 people per city
 
-list_pos = list(pos.keys())
-pos_list = list(pos.items())
-pos_new = {}
 for i in range(len(G.nodes())):
 
     if list(G.nodes())[i] == 'WUH':
-        start_pos = i
+        start_city = i
 
-r_node = start_pos
-I[r_node,0] = np.random.randint(10)          #Random number of infected in city r_node
-S[:,0] = N[:,0] - I[:,0]        # Defining the number of susceptible in each city at t=0
+I[start_city,0] = np.random.randint(10)     # Random number of infected in city r_node
+S[:,0] = N[:,0] - I[:,0]                    # Defining the number of susceptible in each city at t=0
 
-
-
-SIR = np.zeros(shape = (3, T))  #Initialize total SIR matrix
+SIR = np.zeros(shape = (3, T))  # Initialize total SIR matrix
 SIR[:, 0] = np.sum(S[:,0]), np.sum(I[:,0]), np.sum(R[:,0])
 
 
 for t in range(T-1):
     dNdt = - public_trans * np.dot(L_sym, N[:, t]) # Number of people travelling to another city each day
 
-    #dNdt = dNdt - np.sum(dNdt) / n_nodes # Making sure that the system is closed
     dNdt = np.round(dNdt)
 
-    #N[:, t+1] = N[:,t] + dNdt
     A_I = np.zeros((n_nodes, n_nodes))  #Initializing adjacency matrix for infected
     
     
@@ -157,14 +148,10 @@ N[:, T-1] = S[:, T-1] + I[:, T-1] + R[:, T-1]
 
 #%%
 import cartopy.crs as ccrs
-plt.close('all')
+
 crs = ccrs.PlateCarree()
 
 fig1 = plt.figure()
-
-crs = ccrs.PlateCarree()
-
-#%%
 
 for t in range(T):
     ax1 = plt.subplot(111, projection = crs)
@@ -180,11 +167,9 @@ for t in range(T):
              node_size=0.1*I[:,t],
              with_labels=False,
              pos=pos,
-             node_color = 'r',
-             cmap=plt.cm.autumn)
-    if t != T-1:
-        if SIR[1, t] == 0:
-            break
+             node_color = 'r')
+    if SIR[1, t] == 0:
+        break
        
     plt.pause(0.1)
     ax1.cla() 
