@@ -16,10 +16,10 @@ import json
 from pathlib import Path
 
 class SIRNetwork:
+
     def __init__(self, datafiles, simulated_days, alpha, beta, gamma):
         self.Graph, self.A, self.pos = self.load_graph(datafiles['data'], datafiles['position'])
         self.Number_of_nodes = self.A.shape[0]
-        self.A_I = np.zeros((self.Number_of_nodes, self.Number_of_nodes))  #Initializing adjacency matrix for infected
         self.L_sym = self.Laplacian(self.A)    # Calculate symmetric graph Laplacian
         self.simulated_days = simulated_days
         self.alpha = alpha
@@ -27,7 +27,7 @@ class SIRNetwork:
         self.gamma = gamma
         self.R0 = self.beta/self.gamma
 
-        self.init_simulation(self.Number_of_nodes)
+        #self.init_simulation(self.Number_of_nodes)
 
     def load_graph(self, file_graph, file_positions):
         
@@ -57,14 +57,33 @@ class SIRNetwork:
         L = I - np.dot(D_norm, np.dot( A, D_norm))
         L = np.nan_to_num(L)
         return L
+class NetworkSimulation:
 
-    def init_simulation(self, Number_of_nodes):
+    def __init__(self, Network, timesteps):
 
-        self.N = np.zeros((Number_of_nodes, self.simulated_days), dtype = 'int')   #Initialize vector for city populations
+        self.N = np.zeros((Network.Number_of_nodes, timesteps), dtype = 'int')   #Initialize vector for city populations
         self.S, self.I, self.R = self.N.copy(), self.N.copy(), self.N.copy()      #Initialize vector for susceptible, infected, and recovered in each city
-        self.SIR = np.zeros((3, self.simulated_days))
-        self.N[:,0] = 10000 * np.ones((Number_of_nodes, )) #Population in each city at t=0
+        self.A_I = np.zeros((Network.Number_of_nodes, Network.Number_of_nodes))  #Initializing adjacency matrix for infected
+        self.SIR = np.zeros((3, timesteps))
+        
+        self.N[:,0] = 10000 * np.ones((self.N.shape[0], )) #Population in each city at t=0
+        
+        list_pos = list(Network.pos.keys())
+        pos_list = list(Network.pos.items())
 
+        for i in range(Network.Number_of_nodes):
+
+            if list(Network.Graph.nodes())[i] == 'WUH': #Selecting Wuhan as first infected city
+                start_pos = i
+
+        r_node = start_pos
+        self.I[r_node,0] = np.random.randint(10)          #Random number of infected in city r_node
+        self.S[:,0] = self.N[:,0] - self.I[:,0]        # Defining the number of susceptible in each city at t=0
+
+
+
+        self.SIR = np.zeros(shape = (3, Network.simulated_days))  #Initialize total SIR matrix
+        self.SIR[:, 0] = np.sum(self.S[:,0]), np.sum(self.I[:,0]), np.sum(self.R[:,0])
 
     def get_infected_travellers(self, n_nodes, N, I, dNdt):
         if N == 0:
@@ -99,20 +118,19 @@ class SIRNetwork:
             self.A_I[n, n] = -Nr_I
             Flux_I = Flux_I - Nr_I #Count down the total number of infected left to distribute
 
-    def simulate(self):
-        for t in range(SIR_network.simulated_days-1):
-            dNdt = - SIR_network.alpha * np.dot(SIR_network.L_sym, SIR_network.N[:, t]) # Number of people travelling to another city each day
+    def simulate(self, Network):
+        for t in range(Network.simulated_days-1):
+            dNdt = - Network.alpha * np.dot(Network.L_sym, self.N[:, t]) # Number of people travelling to another city each day
 
             dNdt = np.round(dNdt)
 
-            #self.A_I = np.zeros((self.Number_of_nodes, self.Number_of_nodes))  #Initializing adjacency matrix for infected
-            print(t)
+            print(f"Timestep: {t+1} of { Network.simulated_days-1}")
     
-            for n in range(self.Number_of_nodes):
+            for n in range(Network.Number_of_nodes):
 
-                Flux_I = self.get_infected_travellers(self.Number_of_nodes, self.N[n, t], self.I[n, t], dNdt[n])
+                Flux_I = self.get_infected_travellers(Network.Number_of_nodes, self.N[n, t], self.I[n, t], dNdt[n])
                 
-                self.update_infected_adjacency_matrix(self.Number_of_nodes, self.A, n, Flux_I)
+                self.update_infected_adjacency_matrix(Network.Number_of_nodes, Network.A, n, Flux_I)
             
             #Correction from movements
             dI = np.sum(self.A_I, axis = 1)
@@ -120,9 +138,9 @@ class SIRNetwork:
             self.I[:, t] = self.I[:, t] + dI 
             self.S[:, t] = self.S[:, t] - dI
             
-            dSdt = -self.beta * self.I[:, t] * self.S[:, t] / self.N[:, t]
-            dIdt = self.beta * self.I[:, t] * self.S[:, t] / self.N[:, t] - self.gamma * self.I[:, t]
-            dRdt = self.gamma*self.I[:, t]
+            dSdt = -Network.beta * self.I[:, t] * self.S[:, t] / self.N[:, t]
+            dIdt = Network.beta * self.I[:, t] * self.S[:, t] / self.N[:, t] - Network.gamma * self.I[:, t]
+            dRdt = Network.gamma*self.I[:, t]
             
             self.S[:, t+1] = self.S[:, t] + dSdt
             self.I[:, t+1] = self.I[:, t] + dIdt
@@ -131,7 +149,7 @@ class SIRNetwork:
 
             self.SIR[:, t+1] = np.sum(self.S[:,t+1]), np.sum(self.I[:,t+1]), np.sum(self.R[:,t+1])
 
-        self.N[:, self.simulated_days-1] = self.S[:, self.simulated_days-1] + self.I[:, self.simulated_days-1] + self.R[:, self.simulated_days-1]
+        self.N[:, Network.simulated_days-1] = self.S[:, Network.simulated_days-1] + self.I[:, Network.simulated_days-1] + self.R[:, Network.simulated_days-1]
 
 #%%
 
@@ -142,28 +160,13 @@ datafiles = {'data': 'graph_data.json', 'position':  'pos_dic.json'}
 SIR_network = SIRNetwork(datafiles = datafiles, simulated_days = 30, alpha = 0.1, beta = 0.8, gamma = 0.4)
 
 
-list_pos = list(SIR_network.pos.keys())
-pos_list = list(SIR_network.pos.items())
+SIR_simulation = NetworkSimulation(SIR_network, 30)
 
-for i in range(len(SIR_network.Graph.nodes())):
-
-    if list(SIR_network.Graph.nodes())[i] == 'WUH': #Selecting Wuhan as first infected city
-        start_pos = i
-
-r_node = start_pos
-SIR_network.I[r_node,0] = np.random.randint(10)          #Random number of infected in city r_node
-SIR_network.S[:,0] = SIR_network.N[:,0] - SIR_network.I[:,0]        # Defining the number of susceptible in each city at t=0
-
-
-
-SIR_network.SIR = np.zeros(shape = (3, SIR_network.simulated_days))  #Initialize total SIR matrix
-SIR_network.SIR[:, 0] = np.sum(SIR_network.S[:,0]), np.sum(SIR_network.I[:,0]), np.sum(SIR_network.R[:,0])
-
-
-
-SIR_network.simulate()
+SIR_simulation.simulate(SIR_network)
 
 #%%
+fig1 = plt.figure()
+ax1 = plt.subplot(111, projection = crs)
 import cartopy.crs as ccrs
 sns.set()
 plt.close('all')
@@ -176,26 +179,25 @@ for t in range(SIR_network.simulated_days):
 
              alpha=.25,
              width=.1,
-             node_size=0.1*SIR_network.I[:,t],
+             node_size=0.1*SIR_simulation.I[:,t],
              with_labels=False,
              pos=SIR_network.pos,
              node_color = 'r',
              cmap=plt.cm.autumn)
 
     if t != SIR_network.simulated_days-1:
-        if SIR_network.SIR[1, t] == 0:
+        if SIR_simulation.SIR[1, t] == 0:
             break
         
         plt.pause(0.1)
         ax1.cla()
 #%%
-print('SIR_network.SIR[0] ', SIR_network.SIR[0])
-print('SIR_network.SIR[0,0] ', SIR_network.SIR[0,0])
+
 fig2 = plt.figure()
 ax2 = plt.subplot(111)
-l1, = ax2.plot(SIR_network.SIR[0]/SIR_network.SIR[0,0], 'b', alpha = 0.5)
-l2, = ax2.plot(SIR_network.SIR[1]/SIR_network.SIR[0,0], 'r', alpha = 0.5)
-l3, = ax2.plot(SIR_network.SIR[2]/SIR_network.SIR[0,0], 'g', alpha = 0.5)
+l1, = ax2.plot(SIR_simulation.SIR[0]/SIR_simulation.SIR[0,0], 'b', alpha = 0.5)
+l2, = ax2.plot(SIR_simulation.SIR[1]/SIR_simulation.SIR[0,0], 'r', alpha = 0.5)
+l3, = ax2.plot(SIR_simulation.SIR[2]/SIR_simulation.SIR[0,0], 'g', alpha = 0.5)
 ax2.legend([l1, l2, l3], ['Susceptible', 'Infected', 'Recovered'])
 ax2.set_title('R0: ' + str(SIR_network.R0))
 ax2.set_xlabel('Days')
