@@ -6,12 +6,14 @@ Created on Sat Mar 14 13:28:30 2020
 
 @author: Jonas
 """
+#%%
 
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import seaborn as sns
 import json
+from pathlib import Path
 
 class SIRNetwork:
 
@@ -40,7 +42,7 @@ class SIRNetwork:
         pos = import_pos
         n_nodes = nx.number_of_nodes(G)
         A = nx.to_numpy_array(G)    #Save the adjacency matrix of the network
-
+        
         return G, A, pos
 
 
@@ -163,18 +165,18 @@ SIR_simulation = NetworkSimulation(SIR_network, 30)
 SIR_simulation.simulate(SIR_network)
 
 #%%
+fig1 = plt.figure()
+ax1 = plt.subplot(111, projection = crs)
 import cartopy.crs as ccrs
 sns.set()
 plt.close('all')
-crs = ccrs.PlateCarree()
-
-fig1 = plt.figure()
-ax1 = plt.subplot(111, projection = crs)
 
 for t in range(SIR_network.simulated_days):
 
     ax1.stock_img()
     nx.draw_networkx(SIR_network.Graph, ax = ax1, font_size=10,
+
+
              alpha=.25,
              width=.1,
              node_size=0.1*SIR_simulation.I[:,t],
