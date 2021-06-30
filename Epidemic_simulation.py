@@ -6,12 +6,14 @@ Created on Sat Mar 14 13:28:30 2020
 
 @author: Jonas
 """
+#%%
 
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import seaborn as sns
 import json
+from pathlib import Path
 
 class SIRNetwork:
     def __init__(self, datafiles, simulated_days, alpha, beta, gamma):
@@ -40,7 +42,7 @@ class SIRNetwork:
         pos = import_pos
         n_nodes = nx.number_of_nodes(G)
         A = nx.to_numpy_array(G)    #Save the adjacency matrix of the network
-
+        
         return G, A, pos
 
 
@@ -136,8 +138,6 @@ class SIRNetwork:
 seed = 0
 np.random.seed(seed)
 
-
-
 datafiles = {'data': 'graph_data.json', 'position':  'pos_dic.json'}
 SIR_network = SIRNetwork(datafiles = datafiles, simulated_days = 30, alpha = 0.1, beta = 0.8, gamma = 0.4)
 
@@ -160,21 +160,20 @@ SIR_network.SIR = np.zeros(shape = (3, SIR_network.simulated_days))  #Initialize
 SIR_network.SIR[:, 0] = np.sum(SIR_network.S[:,0]), np.sum(SIR_network.I[:,0]), np.sum(SIR_network.R[:,0])
 
 
+
 SIR_network.simulate()
 
 #%%
 import cartopy.crs as ccrs
 sns.set()
 plt.close('all')
-crs = ccrs.PlateCarree()
-
-fig1 = plt.figure()
-ax1 = plt.subplot(111, projection = crs)
 
 for t in range(SIR_network.simulated_days):
 
     ax1.stock_img()
     nx.draw_networkx(SIR_network.Graph, ax = ax1, font_size=10,
+
+
              alpha=.25,
              width=.1,
              node_size=0.1*SIR_network.I[:,t],
