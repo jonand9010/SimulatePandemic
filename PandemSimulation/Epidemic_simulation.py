@@ -17,8 +17,8 @@ from pathlib import Path
 import os
 
 
-from Network.Networks import SIRNetwork
-from Simulation.NetworkSimulation import SIR_NetworkSimulation
+from networks.Networks import SIRNetwork
+from simulation.NetworkSimulation import SIR_NetworkSimulation
 from plotting.PandemPlots import WorldMapSimulation, SIRHistoryPlot
 
 
