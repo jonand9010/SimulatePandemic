@@ -30,7 +30,7 @@ class WorldMapSimulation:
                 if self.Simulation.SIR[1, t] == 0:
                     break
                 
-                plt.pause(0.1)
+                plt.pause(0.05)
                 self.ax.cla()
 
 

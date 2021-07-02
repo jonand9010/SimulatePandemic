@@ -30,7 +30,7 @@ datafiles = {'data': dir_path + '/data/graph_data.json', 'position':  dir_path +
 SIR_network = SIRNetwork(datafiles = datafiles, alpha = 0.1, beta = 0.8, gamma = 0.4)
 
 
-SIR_simulation = SIR_NetworkSimulation(SIR_network, timesteps = 20)
+SIR_simulation = SIR_NetworkSimulation(SIR_network, timesteps = 100)
 
 SIR_simulation.simulate()
 
