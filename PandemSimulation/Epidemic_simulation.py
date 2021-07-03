@@ -27,7 +27,7 @@ seed = 0
 np.random.seed(seed)
 
 datafiles = {'data': dir_path + '/data/graph_data.json', 'position':  dir_path + '/data/pos_dic.json'}
-SIR_network = SIRNetwork(datafiles = datafiles, alpha = 0.1, beta = 0.8, gamma = 0.4)
+SIR_network = SIRNetwork(datafiles = datafiles, travel_rate = 0.01, beta = 1, gamma = 0.4)
 
 
 SIR_simulation = SIR_NetworkSimulation(SIR_network, timesteps = 100)

@@ -2,6 +2,11 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import seaborn as sns
 import cartopy.crs as ccrs
+from matplotlib.animation import FuncAnimation
+import numpy as np
+
+
+
 
 class WorldMapSimulation:
 
@@ -12,11 +17,13 @@ class WorldMapSimulation:
         self.Network = Network
         self.Simulation = Simulation
 
-    def run_simulation(self):
+    def run_simulation(self):        
+        
         for t in range(self.timesteps):
 
             self.ax.stock_img()
             self.ax.coastlines()
+
             nx.draw_networkx(self.Network.Graph, ax = self.ax, font_size=10,
                     alpha=.25,
                     width=.1,
@@ -26,14 +33,14 @@ class WorldMapSimulation:
                     node_color = 'r',
                     cmap=plt.cm.autumn)
 
+            plt.pause(0.05)
+            
             if t != self.timesteps-1:
                 if self.Simulation.SIR[1, t] == 0:
                     break
                 
-                plt.pause(0.05)
                 self.ax.cla()
-
-
+        
 class SIRHistoryPlot():
 
     def __init__(self, Simulation):

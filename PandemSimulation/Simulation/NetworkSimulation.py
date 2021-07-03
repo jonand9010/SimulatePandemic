@@ -9,20 +9,18 @@ class NetworkSimulation:
         self.node_degree = np.sum(self.A,0)
         self.A_I = np.zeros(Network.A.shape)  #Initializing adjacency matrix for infected
         self.L_sym = Network.L_sym
-        self.travel_matrix = self.get_travel_matrix()
-
-
 
 class SIR_NetworkSimulation(NetworkSimulation):
 
     def __init__(self, Network, timesteps):
         super().__init__(Network, timesteps)
-        self.alpha, self.beta, self.gamma = Network.alpha, Network.beta, Network.gamma
+        self.beta, self.gamma = Network.beta, Network.gamma
         self.travel_parameter = Network.travel_parameter
         self.timesteps = timesteps
         self.S, self.I, self.R = self.node_population.copy(), self.node_population.copy(), self.node_population.copy()      #Initialize vector for susceptible, infected, and recovered in each city
         self.SIR = np.zeros((3, self.timesteps))
         self.start_num_infected = 10
+        self.travel_rate = Network.travel_rate
         
         self.node_population[:,0] = 10000 * np.ones((self.node_population.shape[0], )) #Population in each city at t=0
         self.travel_matrix = self.get_travel_matrix()
@@ -31,12 +29,12 @@ class SIR_NetworkSimulation(NetworkSimulation):
         
         self.get_first_infected_city()
 
-    def get_travel_matrix(self, travel_rate = 0.01):
+    def get_travel_matrix(self):
     
         travel_matrix = self.A.copy()
 
         for i in range(self.Number_of_nodes):
-            travel_matrix[i,:] = travel_rate * self.node_population[i, 0] / self.node_degree[i] * self.A[i, :]
+            travel_matrix[i,:] = self.travel_rate * self.node_population[i, 0] / self.node_degree[i] * self.A[i, :]
 
         travel_matrix = np.floor(travel_matrix)
 
@@ -56,13 +54,14 @@ class SIR_NetworkSimulation(NetworkSimulation):
 
 
 
-    def simulate(self, infection_rate = 1):
+    def simulate(self):
         for t in range(self.timesteps-1):
 
             nodal_infection_ratio = self.I[:, t]/self.node_population[:, t]
 
-            dIdt = infection_rate* np.dot(self.travel_matrix, nodal_infection_ratio)
+            dIdt = self.beta * np.dot(self.travel_matrix, nodal_infection_ratio)
             dIdt = np.floor(dIdt)
+            dIdt = np.random.poisson(dIdt)
 
             print(f"Timestep: {t+1} of { self.timesteps-1}")
 

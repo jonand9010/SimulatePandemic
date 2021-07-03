@@ -4,17 +4,17 @@ import json
 
 class SIRNetwork:
 
-    def __init__(self, datafiles, alpha, beta, gamma, travel_parameter = 0.01):
+    def __init__(self, datafiles, travel_rate, beta, gamma, travel_parameter = 0.01):
         self.Graph, self.A, self.pos = self.load_graph(datafiles['data'], datafiles['position'])
         self.nodes = self.Graph.nodes()
         self.Number_of_nodes = self.A.shape[0]
         self.L_sym = self.Laplacian(self.A)    # Calculate symmetric graph Laplacian
-        self.alpha = alpha
+        self.travel_rate = travel_rate
         self.beta = beta
         self.gamma = gamma
         self.R0 = self.beta/self.gamma
         self.travel_parameter = travel_parameter
-        #self.init_simulation(self.Number_of_nodes)
+
 
     def load_graph(self, file_graph, file_positions):
         
