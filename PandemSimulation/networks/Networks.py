@@ -6,7 +6,8 @@ class SIRNetwork:
 
     def __init__(self, datafiles, travel_rate, beta, gamma, travel_parameter = 0.01):
         self.Graph, self.A, self.pos = self.load_graph(datafiles['data'], datafiles['position'])
-        self.nodes = self.Graph.nodes()
+        self.nodes = list(self.Graph.nodes())
+        self.node_degree = np.sum(self.A,0)
         self.Number_of_nodes = self.A.shape[0]
         self.L_sym = self.Laplacian(self.A)    # Calculate symmetric graph Laplacian
         self.travel_rate = travel_rate

@@ -2,30 +2,27 @@ import numpy as np
 
 class NetworkSimulation:
     def __init__(self, Network, timesteps):
-        self.Number_of_nodes = Network.Number_of_nodes
-        self.nodes = list(Network.Graph.nodes())
+
+        self.__dict__.update(Network.__dict__)
         self.node_population = np.zeros((Network.Number_of_nodes, timesteps), dtype = 'int')
-        self.A = Network.A
-        self.node_degree = np.sum(self.A,0)
-        self.A_I = np.zeros(Network.A.shape)  #Initializing adjacency matrix for infected
-        self.L_sym = Network.L_sym
+        self.A_I = np.zeros(self.A.shape)  #Initializing adjacency matrix for infected
+
 
 class SIR_NetworkSimulation(NetworkSimulation):
 
-    def __init__(self, Network, timesteps):
+    def __init__(self, Network, timesteps, start_parameters):
         super().__init__(Network, timesteps)
-        self.beta, self.gamma = Network.beta, Network.gamma
-        self.travel_parameter = Network.travel_parameter
+
         self.timesteps = timesteps
+
         self.S, self.I, self.R = self.node_population.copy(), self.node_population.copy(), self.node_population.copy()      #Initialize vector for susceptible, infected, and recovered in each city
         self.SIR = np.zeros((3, self.timesteps))
-        self.start_num_infected = 10
-        self.travel_rate = Network.travel_rate
         
         self.node_population[:,0] = 10000 * np.ones((self.node_population.shape[0], )) #Population in each city at t=0
         self.travel_matrix = self.get_travel_matrix()
 
-        self.citykey = 'WUH'
+        self.start_num_infected = start_parameters['infected']
+        self.citykey = start_parameters['city']
         
         self.get_first_infected_city()
 
