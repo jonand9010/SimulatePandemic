@@ -23,7 +23,7 @@ class WorldMapSimulation:
             self.ax.stock_img()
             self.ax.coastlines()
 
-            nx.draw_networkx(self.Network.Graph, ax = self.ax, font_size=10,
+            nx.draw_networkx(self.Network.graph, ax = self.ax, font_size=10,
                     alpha=.25,
                     width=.1,
                     node_size=0.1*self.Simulation.I[:,t],
