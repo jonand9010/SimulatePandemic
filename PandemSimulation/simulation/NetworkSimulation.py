@@ -1,6 +1,7 @@
 import numpy as np
 
 class NetworkSimulation:
+    
     def __init__(self, Network, timesteps):
 
         self.__dict__.update(Network.__dict__)
