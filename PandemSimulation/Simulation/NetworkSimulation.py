@@ -15,10 +15,11 @@ class SIR_NetworkSimulation(NetworkSimulation):
 
         self.timesteps = timesteps
 
-        self.S, self.I, self.R = self.node_population.copy(), self.node_population.copy(), self.node_population.copy()      #Initialize vector for susceptible, infected, and recovered in each city
+        self.S = self.node_population.copy()      #Initialize vector for susceptible, infected, and recovered in each city
+        self.I, self.R = self.S.copy(), self.S.copy()
         self.SIR = np.zeros((3, self.timesteps))
         
-        self.node_population[:,0] = 10000 * np.ones((self.node_population.shape[0], )) #Population in each city at t=0
+        self.node_population[:,0] = start_parameters['node_populations']  
         self.travel_matrix = self.get_travel_matrix()
 
         self.start_num_infected = start_parameters['infected']
