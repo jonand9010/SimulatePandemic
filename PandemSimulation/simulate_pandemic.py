@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 import os
 
-from networks.Networks import SIRNetwork
+from networks.SIR import SIRNetwork
 from simulation.NetworkSimulation import SIR_NetworkSimulation
 from plotting.PandemPlots import WorldMapSimulation, SIRHistoryPlot
 
